@@ -1,0 +1,20 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Local caches and downloads
+.cache/
+.huggingface/
+
+# Editors/OS
+.DS_Store
+.idea/
+.vscode/
+
