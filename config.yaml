@@ -2,14 +2,15 @@ audio:
   sample_rate: 16000
   chunk_seconds: 2.0
   silence_threshold: 0.0
+  tail_padding_seconds: 0.5
   device_name:
 whisper:
-  model_size: large-v3
+  model_size: large-v3-turbo
   compute_type: float16
-  beam_size: 5
+  beam_size: 3
   language: en
   model_dir: .cache/huggingface
-  offline: false
+  offline: true
 processing:
   mode: correct
   incremental: false
@@ -17,11 +18,11 @@ processing:
 rewriter:
   enabled: true
   provider: ollama
-  model: llama3.1:8b
+  model: qwen2.5:7b
   model_path:
   temperature: 0.2
   max_tokens: 256
-  system_prompt: You are a transcription corrector. Rewrite the text with proper grammar and punctuation, but do not change its meaning.
+  system_prompt: You are a transcription corrector. Correct the text with proper grammar and punctuation, but do not change its meaning.
 output:
   dry_run: false
   typing_delay: 0.005

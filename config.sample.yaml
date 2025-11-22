@@ -2,6 +2,7 @@ audio:
   sample_rate: 16000
   chunk_seconds: 2.0
   silence_threshold: 0.0
+  tail_padding_seconds: 0.5
   device_name:
 whisper:
   model_size: medium

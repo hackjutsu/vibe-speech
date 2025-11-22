@@ -17,6 +17,9 @@ class AudioConfig(BaseModel):
     silence_threshold: float = Field(
         1e-3, description="RMS threshold; chunks with lower energy are treated as silence and skipped."
     )
+    tail_padding_seconds: float = Field(
+        0.5, description="Additional audio to capture after hotkey release to avoid clipping the end of speech."
+    )
 
 
 class WhisperConfig(BaseModel):

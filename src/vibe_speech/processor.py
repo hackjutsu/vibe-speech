@@ -3,13 +3,18 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+import logging
 from typing import Optional
 
 from .config import ProcessingConfig
-from .rewriter import LocalLLMRewriter, RewriteResult
+from .rewriter import LocalLLMRewriter, RewriteResult, RewriterError
+
+logger = logging.getLogger(__name__)
 
 
-def process_text(config: ProcessingConfig, text: str, rewriter: Optional[LocalLLMRewriter] = None) -> str:
+def process_text(
+    config: ProcessingConfig, text: str, rewriter: Optional[LocalLLMRewriter] = None
+) -> tuple[str, Optional[float]]:
     if config.mode == "raw":
         result = text
     elif config.mode == "cleanup":
@@ -19,15 +24,22 @@ def process_text(config: ProcessingConfig, text: str, rewriter: Optional[LocalLL
         result = _cleanup(text)
     elif config.mode == "correct":
         result = _correct(text)
+        rewrite_time = None
         if rewriter and rewriter.config.enabled:
-            rewrite = rewriter.rewrite(result)
-            result = rewrite.text
+            try:
+                rewrite = rewriter.rewrite(result)
+                rewrite_time = rewrite.duration_s
+                result = rewrite.text
+            except RewriterError as exc:
+                logger.error("Rewriter failed: %s", exc)
+                raise
+        return result if config.max_chars <= 0 else result[: config.max_chars], rewrite_time
     else:  # pragma: no cover
         result = text
 
     if config.max_chars > 0:
         result = result[: config.max_chars]
-    return result
+    return result, None
 
 
 def _cleanup(text: str) -> str:

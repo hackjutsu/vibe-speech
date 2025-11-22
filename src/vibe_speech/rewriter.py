@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Optional
 from urllib import request, parse, error
@@ -15,6 +16,11 @@ logger = logging.getLogger(__name__)
 class RewriteResult:
     text: str
     used_rewriter: bool
+    duration_s: Optional[float] = None
+
+
+class RewriterError(RuntimeError):
+    """Raised when the configured rewriter backend fails."""
 
 
 class LocalLLMRewriter:
@@ -56,13 +62,13 @@ class LocalLLMRewriter:
 
     def _rewrite_via_ollama(self, text: str) -> RewriteResult:
         if not self.config.model:
-            logger.warning("Ollama provider enabled but no model specified; skipping.")
-            return RewriteResult(text=text, used_rewriter=False)
+            raise RewriterError("Ollama provider enabled but no model specified.")
         prompt = (
             f"{self.config.system_prompt}\n"
             f"Input: {text.strip()}\n"
             "Rewrite:"
         )
+        start = time.perf_counter()
         body = json.dumps(
             {
                 "model": self.config.model,
@@ -83,14 +89,13 @@ class LocalLLMRewriter:
             result = payload.get("response", "") or payload.get("text", "")
             result = result.strip()
             if not result:
-                return RewriteResult(text=text, used_rewriter=False)
-            return RewriteResult(text=result, used_rewriter=True)
+                raise RewriterError("Ollama returned empty response.")
+            duration = time.perf_counter() - start
+            return RewriteResult(text=result, used_rewriter=True, duration_s=duration)
         except error.URLError as exc:  # pragma: no cover - runtime dependency
-            logger.error("Ollama request failed: %s", exc)
-            return RewriteResult(text=text, used_rewriter=False)
+            raise RewriterError(f"Ollama request failed: {exc}") from exc
         except Exception as exc:  # pragma: no cover - runtime dependency
-            logger.error("Ollama parse failed: %s", exc)
-            return RewriteResult(text=text, used_rewriter=False)
+            raise RewriterError(f"Ollama parse failed: {exc}") from exc
 
     def rewrite(self, text: str) -> RewriteResult:
         if not text.strip():
@@ -108,13 +113,14 @@ class LocalLLMRewriter:
             return RewriteResult(text="", used_rewriter=False)
         self._load()
         if not self._llama:
-            return RewriteResult(text=text, used_rewriter=False)
+            raise RewriterError(self._llama_error or "llama.cpp backend not available.")
 
         prompt = (
             f"{self.config.system_prompt}\n"
             f"Input: {text.strip()}\n"
             "Rewrite:"
         )
+        start = time.perf_counter()
         try:
             output = self._llama(
                 prompt,
@@ -124,8 +130,9 @@ class LocalLLMRewriter:
             )
             result = output.get("choices", [{}])[0].get("text", "").strip()
             if not result:
-                return RewriteResult(text=text, used_rewriter=False)
-            return RewriteResult(text=result, used_rewriter=True)
+                raise RewriterError("llama.cpp returned empty response.")
+            duration = time.perf_counter() - start
+            return RewriteResult(text=result, used_rewriter=True, duration_s=duration)
         except Exception as exc:  # pragma: no cover - runtime dependency
             logger.error("Rewriter failed: %s", exc)
-            return RewriteResult(text=text, used_rewriter=False)
+            raise RewriterError(f"llama.cpp rewrite failed: {exc}") from exc
