@@ -34,7 +34,9 @@ def serve(cfg: AppConfig, dry_run: bool) -> None:
     """Start the voice-to-text loop (currently stubbed)."""
     cfg.output.dry_run = dry_run or cfg.output.dry_run
     runtime = SpeechRuntime(cfg)
-    console.print("[yellow]Starting vibe-speech (audio/Whisper not yet wired). Press Ctrl+C to exit.[/yellow]")
+    console.print(
+        "[yellow]Starting vibe-speech (listening starts OFF; toggle the hotkey). Press Ctrl+C to exit.[/yellow]"
+    )
     runtime.block_forever()
 
 
@@ -62,4 +64,3 @@ def doctor(cfg: AppConfig) -> None:
 
 if __name__ == "__main__":
     app()
-

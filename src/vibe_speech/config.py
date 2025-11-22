@@ -14,17 +14,25 @@ class AudioConfig(BaseModel):
     device_name: Optional[str] = Field(
         default=None, description="Preferred input device; None uses system default."
     )
+    silence_threshold: float = Field(
+        1e-3, description="RMS threshold; chunks with lower energy are treated as silence and skipped."
+    )
 
 
 class WhisperConfig(BaseModel):
     model_size: str = Field("medium", description="Whisper model size (tiny, base, small, medium, large).")
-    compute_type: str = Field("float16", description="ct2 compute type, e.g., float16, int8, int8_float16.")
+    compute_type: str = Field("int8", description="ct2 compute type, e.g., int8, int8_float16, float16.")
     beam_size: int = Field(5, description="Beam size for decoding.")
     language: Optional[str] = Field(default=None, description="Optional language hint, e.g., 'en'.")
+    model_dir: Optional[str] = Field(
+        ".cache/huggingface", description="Local cache directory for model downloads."
+    )
+    offline: bool = Field(True, description="If true, do not attempt network access for models.")
 
 
 class ProcessingConfig(BaseModel):
-    mode: Literal["raw", "cleanup", "summary"] = "raw"
+    mode: Literal["raw", "cleanup", "summary", "correct"] = "raw"
+    incremental: bool = Field(True, description="If true, only type the new delta when text grows.")
     max_chars: int = Field(0, description="Optional truncate to N chars (0 disables).")
 
 
@@ -36,6 +44,7 @@ class OutputConfig(BaseModel):
 
 class HotkeyConfig(BaseModel):
     toggle: str = Field("ctrl+shift+space", description="Hotkey to start/stop listening.")
+    push_to_talk: bool = Field(True, description="If true, listen only while the hotkey is held.")
 
 
 class AppConfig(BaseModel):
@@ -62,4 +71,3 @@ class AppConfig(BaseModel):
 def default_config_path() -> Path:
     cfg_dir = Path(user_config_dir("vibe-speech"))
     return cfg_dir / "config.yaml"
-

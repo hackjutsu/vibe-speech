@@ -4,19 +4,19 @@ audio:
   silence_threshold: 0.0
   device_name:
 whisper:
-  model_size: medium
-  compute_type: int8
+  model_size: small
+  compute_type: float16
   beam_size: 5
   language: en
   model_dir: .cache/huggingface
-  offline: true
+  offline: false
 processing:
-  mode: raw
+  mode: correct
   incremental: false
   max_chars: 0
 output:
-  dry_run: true
-  typing_delay: 0.02
+  dry_run: false
+  typing_delay: 0.005
   focus_target:
 hotkey:
   toggle: ctrl+shift+space
