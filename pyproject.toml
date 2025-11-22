@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vibe-speech"
+version = "0.0.1"
+description = "Cross-platform voice-to-text assistant powered by local Whisper."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "click>=8.1",
+  "faster-whisper>=1.0.0",
+  "numpy>=1.26",
+  "platformdirs>=4.0",
+  "pydantic>=2.6",
+  "pyautogui>=0.9.54",
+  "pynput>=1.7.6",
+  "pyyaml>=6.0",
+  "rich>=13.7",
+  "sounddevice>=0.4.6",
+]
+
+[project.scripts]
+vibe-speech = "vibe_speech.cli:app"
+
+[tool.setuptools.package-data]
+vibe_speech = ["py.typed"]
+

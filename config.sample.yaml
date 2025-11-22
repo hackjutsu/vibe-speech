@@ -1,0 +1,20 @@
+audio:
+  sample_rate: 16000
+  chunk_seconds: 5.0
+  device_name:
+whisper:
+  model_size: medium
+  compute_type: float16
+  beam_size: 5
+  language:
+processing:
+  mode: raw
+  max_chars: 0
+output:
+  dry_run: true
+  typing_delay: 0.02
+  focus_target:
+hotkey:
+  toggle: ctrl+shift+space
+log_level: INFO
+
