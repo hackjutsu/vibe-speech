@@ -47,12 +47,28 @@ class HotkeyConfig(BaseModel):
     push_to_talk: bool = Field(True, description="If true, listen only while the hotkey is held.")
 
 
+class RewriterConfig(BaseModel):
+    enabled: bool = Field(False, description="If true, run transcripts through a local LLM rewriter.")
+    model_path: Optional[str] = Field(
+        default=None,
+        description="Path to a local gguf/ggml model for llama.cpp (only used when enabled).",
+    )
+    temperature: float = Field(0.2, description="Sampling temperature for the rewriter.")
+    max_tokens: int = Field(256, description="Maximum new tokens to generate for rewritten text.")
+    system_prompt: str = Field(
+        "You are a transcription corrector. Rewrite the text with proper grammar and punctuation, "
+        "but do not change its meaning.",
+        description="System prompt for the local LLM rewriter.",
+    )
+
+
 class AppConfig(BaseModel):
     audio: AudioConfig = AudioConfig()
     whisper: WhisperConfig = WhisperConfig()
     processing: ProcessingConfig = ProcessingConfig()
     output: OutputConfig = OutputConfig()
     hotkey: HotkeyConfig = HotkeyConfig()
+    rewriter: RewriterConfig = RewriterConfig()
     log_level: str = Field("INFO", description="Logging level, e.g., INFO, DEBUG.")
 
     @classmethod

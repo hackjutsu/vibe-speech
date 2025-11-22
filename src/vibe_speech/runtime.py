@@ -13,6 +13,7 @@ from pynput import keyboard
 from .automation import OutputAutomator
 from .config import AppConfig
 from .processor import process_text
+from .rewriter import LocalLLMRewriter
 from .whisper_engine import WhisperEngine
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ class SpeechRuntime:
         self.model_dir = model_dir or cfg_model_dir
         self.automator = OutputAutomator(config.output)
         self.whisper = WhisperEngine(config.whisper, model_dir=self.model_dir)
+        self.rewriter = LocalLLMRewriter(config.rewriter)
         self._listening = False
         self._last_text: Optional[str] = None
         self._last_sent: str = ""
@@ -60,7 +62,7 @@ class SpeechRuntime:
 
     def run_once(self, text: str) -> RuntimeStatus:
         """Helper for testing: process and send a provided transcript string."""
-        processed = process_text(self.config.processing, text)
+        processed = process_text(self.config.processing, text, self.rewriter)
         result = self._deliver_output(processed)
         return RuntimeStatus(listening=self._listening, last_text=self._last_text)
 
@@ -240,7 +242,7 @@ class SpeechRuntime:
         except Exception as exc:
             logger.error("Transcription failed: %s", exc)
             return
-        full_text = process_text(self.config.processing, transcript)
+        full_text = process_text(self.config.processing, transcript, self.rewriter)
         if not full_text:
             return
         result = self._deliver_output(full_text)

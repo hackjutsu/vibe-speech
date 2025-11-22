@@ -4,7 +4,7 @@ audio:
   silence_threshold: 0.0
   device_name:
 whisper:
-  model_size: small
+  model_size: large-v3
   compute_type: float16
   beam_size: 5
   language: en
@@ -14,6 +14,12 @@ processing:
   mode: correct
   incremental: false
   max_chars: 0
+rewriter:
+  enabled: true
+  model_path: /path/to/local/model.gguf
+  temperature: 0.2
+  max_tokens: 256
+  system_prompt: You are a transcription corrector. Rewrite the text with proper grammar and punctuation, but do not change its meaning.
 output:
   dry_run: false
   typing_delay: 0.005

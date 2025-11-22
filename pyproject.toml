@@ -21,9 +21,13 @@ dependencies = [
   "sounddevice>=0.4.6",
 ]
 
+[project.optional-dependencies]
+rewriter = [
+  "llama-cpp-python>=0.2.0",
+]
+
 [project.scripts]
 vibe-speech = "vibe_speech.cli:app"
 
 [tool.setuptools.package-data]
 vibe_speech = ["py.typed"]
-

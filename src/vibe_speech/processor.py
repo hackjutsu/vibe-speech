@@ -3,10 +3,13 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+from typing import Optional
+
 from .config import ProcessingConfig
+from .rewriter import LocalLLMRewriter, RewriteResult
 
 
-def process_text(config: ProcessingConfig, text: str) -> str:
+def process_text(config: ProcessingConfig, text: str, rewriter: Optional[LocalLLMRewriter] = None) -> str:
     if config.mode == "raw":
         result = text
     elif config.mode == "cleanup":
@@ -16,6 +19,9 @@ def process_text(config: ProcessingConfig, text: str) -> str:
         result = _cleanup(text)
     elif config.mode == "correct":
         result = _correct(text)
+        if rewriter and rewriter.config.enabled:
+            rewrite = rewriter.rewrite(result)
+            result = rewrite.text
     else:  # pragma: no cover
         result = text
 
