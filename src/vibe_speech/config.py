@@ -49,10 +49,15 @@ class HotkeyConfig(BaseModel):
 
 class RewriterConfig(BaseModel):
     enabled: bool = Field(False, description="If true, run transcripts through a local LLM rewriter.")
+    provider: Literal["local", "ollama"] = Field(
+        "local", description="Rewriter backend: 'local' uses llama-cpp, 'ollama' calls a local Ollama server."
+    )
     model_path: Optional[str] = Field(
         default=None,
         description="Path to a local gguf/ggml model for llama.cpp (only used when enabled).",
     )
+    model: Optional[str] = Field(default=None, description="Model name when using the ollama provider.")
+    ollama_url: str = Field("http://localhost:11434", description="Base URL for the Ollama server.")
     temperature: float = Field(0.2, description="Sampling temperature for the rewriter.")
     max_tokens: int = Field(256, description="Maximum new tokens to generate for rewritten text.")
     system_prompt: str = Field(

@@ -16,7 +16,9 @@ processing:
   max_chars: 0
 rewriter:
   enabled: false
+  provider: local
   model_path:
+  model:
   temperature: 0.2
   max_tokens: 256
   system_prompt: You are a transcription corrector. Rewrite the text with proper grammar and punctuation, but do not change its meaning.

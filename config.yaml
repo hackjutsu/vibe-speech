@@ -16,7 +16,9 @@ processing:
   max_chars: 0
 rewriter:
   enabled: true
-  model_path: /path/to/local/model.gguf
+  provider: ollama
+  model: llama3.1:8b
+  model_path:
   temperature: 0.2
   max_tokens: 256
   system_prompt: You are a transcription corrector. Rewrite the text with proper grammar and punctuation, but do not change its meaning.
