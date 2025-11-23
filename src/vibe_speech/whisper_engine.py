@@ -64,6 +64,7 @@ class WhisperEngine:
             audio_chunk,
             beam_size=self.config.beam_size,
             language=self.config.language,
+            initial_prompt=self.config.initial_prompt,
         )
         text_parts = [segment.text.strip() for segment in segments if segment.text]
         return " ".join(text_parts).strip()

@@ -5,18 +5,19 @@ audio:
   tail_padding_seconds: 0.5
   device_name:
 whisper:
-  model_size: large-v3-turbo
+  model_size: distil-large-v3.5
   compute_type: float16
   beam_size: 3
   language: en
+  initial_prompt:
   model_dir: .cache/huggingface
-  offline: true
+  offline: false
 processing:
   mode: correct
   incremental: false
   max_chars: 0
 rewriter:
-  enabled: true
+  enabled: false
   provider: ollama
   model: qwen2.5:7b
   model_path:

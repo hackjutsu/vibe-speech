@@ -27,6 +27,9 @@ class WhisperConfig(BaseModel):
     compute_type: str = Field("int8", description="ct2 compute type, e.g., int8, int8_float16, float16.")
     beam_size: int = Field(5, description="Beam size for decoding.")
     language: Optional[str] = Field(default=None, description="Optional language hint, e.g., 'en'.")
+    initial_prompt: Optional[str] = Field(
+        default=None, description="Optional prompt/context to prime Whisper decoding."
+    )
     model_dir: Optional[str] = Field(
         ".cache/huggingface", description="Local cache directory for model downloads."
     )

@@ -1,15 +1,15 @@
 # TODO and Progress
 
 ## Done
-- Created initial scaffold: `pyproject.toml`, `README.md`, `config.sample.yaml`, and package skeleton under `src/vibe_speech/` (config, CLI, runtime stub, automation stub, processor, whisper placeholder).
-- CLI commands added: `serve` (stub loop, dry-run by default) and `doctor` (inspect config).
-- Basic config handling (YAML + defaults) and dry-run typing via `pyautogui`.
+- Whisper wiring via faster-whisper with configurable model/beam/compute type.
+- Hotkey toggle (push-to-talk), audio capture with tail padding, buffering, and single-shot transcription on release.
+- Optional grammar rewriter (Ollama/local llama.cpp); processing modes (`raw`, cleanup, correct).
+- Spinner and colored timing logs for transcribe/rewrite; tail capture to reduce clipping.
+- Config expanded: silence gate, tail padding, initial prompt for Whisper, rewriter backend/options.
+- Docs updated (README); sample config expanded.
 
 ## Next
-- Wire microphone capture (`sounddevice`) with chunked streaming and pass into Whisper.
-- Implement WhisperEngine using `faster-whisper` (medium model, float16 on Apple Silicon) with local model cache.
-- Add hotkey toggle and simple state machine (likely `pynput`) to start/stop listening.
-- Implement per-OS focus/typing helpers (Hammerspoon/AppleScript on macOS, AutoHotkey on Windows) with pyautogui fallback; keep dry-run safety switch.
-- Enhance text processing: configurable cleanup/summary step; add truncation safeguards.
-- Add tests for config and text processing; expand coverage as audio/automation land.
-- Improve docs: platform-specific setup, troubleshooting for audio devices and model downloads.
+- Add streaming/partial output and/or VAD-based end-of-speech for lower latency.
+- Per-OS focus helpers (Hammerspoon/AppleScript, AutoHotkey) beyond pyautogui.
+- Tests for audio/processing/rewriter paths.
+- UX polish: better in-app indicators, config validation, and device selection helper.
