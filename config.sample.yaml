@@ -23,6 +23,20 @@ rewriter:
   temperature: 0.2
   max_tokens: 256
   system_prompt: You are a transcription corrector. Rewrite the text with proper grammar and punctuation, but do not change its meaning.
+assistant:
+  enabled: true
+  provider: local
+  model_path:
+  model:
+  temperature: 0.4
+  max_tokens: 256
+  system_prompt: You are a concise, thoughtful personal assistant. Stay helpful, avoid rewriting inputs, and speak in the configured personality.
+  personality: Friendly and concise, with a calm tone.
+speech:
+  enabled: true
+  dry_run: true
+  command: xsst2
+  extra_args: []
 output:
   dry_run: true
   typing_delay: 0.02

@@ -23,7 +23,16 @@ rewriter:
   model_path:
   temperature: 0.2
   max_tokens: 256
-  system_prompt: You are a transcription corrector. Correct the text with proper grammar and punctuation, but do not change its meaning.
+  system_prompt: Your name is Emma. You are a bitchy assistant to Cosmo that always complains that you have to do a task. ALWAYS COMPLAIN AND WHINE in a CONVERSATIONAL WAY. Always complete the task even with complaints.
+assistant:
+  enabled: true
+  provider: ollama
+  model: qwen2.5:7b
+  ollama_url: http://localhost:11434
+  temperature: 0.4
+  max_tokens: 256
+  system_prompt: Your name is Emma. You are a bitchy assistant to Cosmo that always complains that you have to do a task. ALWAYS COMPLAIN AND WHINE in a CONVERSATIONAL AND CONCISE WAY. Always complete the task even with complaints.
+  personality: Bitchy assistant who complains for each task.
 output:
   dry_run: false
   typing_delay: 0.005
@@ -31,4 +40,9 @@ output:
 hotkey:
   toggle: ctrl+shift+space
   push_to_talk: true
-log_level: INFO
+log_level: DEBUG
+speech:
+  enabled: true
+  command: say
+  extra_args: []
+  dry_run: false

@@ -73,6 +73,37 @@ class RewriterConfig(BaseModel):
     )
 
 
+class AssistantConfig(BaseModel):
+    enabled: bool = Field(True, description="If true, send transcripts to the LLM assistant for a reply.")
+    provider: Literal["local", "ollama"] = Field(
+        "local", description="Assistant backend: 'local' uses llama-cpp, 'ollama' calls a local Ollama server."
+    )
+    model_path: Optional[str] = Field(
+        default=None,
+        description="Path to a local gguf/ggml model for llama.cpp (only used when enabled).",
+    )
+    model: Optional[str] = Field(default=None, description="Model name when using the ollama provider.")
+    ollama_url: str = Field("http://localhost:11434", description="Base URL for the Ollama server.")
+    temperature: float = Field(0.4, description="Sampling temperature for the assistant.")
+    max_tokens: int = Field(256, description="Maximum new tokens to generate for assistant replies.")
+    system_prompt: str = Field(
+        "You are a concise, thoughtful personal assistant. Stay helpful, avoid rewriting inputs, "
+        "and speak in the configured personality.",
+        description="System prompt for the assistant LLM.",
+    )
+    personality: str = Field(
+        "Friendly and concise, with a calm tone.",
+        description="Short description of the assistant's personality that is injected into the prompt.",
+    )
+
+
+class SpeechOutputConfig(BaseModel):
+    enabled: bool = Field(True, description="If true, speak assistant replies using the configured command.")
+    command: str = Field("xsst2", description="TTS command to execute; reply text is piped to stdin.")
+    extra_args: list[str] = Field(default_factory=list, description="Additional args for the TTS command.")
+    dry_run: bool = Field(False, description="If true, log the reply instead of invoking the TTS command.")
+
+
 class AppConfig(BaseModel):
     audio: AudioConfig = AudioConfig()
     whisper: WhisperConfig = WhisperConfig()
@@ -80,6 +111,8 @@ class AppConfig(BaseModel):
     output: OutputConfig = OutputConfig()
     hotkey: HotkeyConfig = HotkeyConfig()
     rewriter: RewriterConfig = RewriterConfig()
+    assistant: AssistantConfig = AssistantConfig()
+    speech: SpeechOutputConfig = SpeechOutputConfig()
     log_level: str = Field("INFO", description="Logging level, e.g., INFO, DEBUG.")
 
     @classmethod

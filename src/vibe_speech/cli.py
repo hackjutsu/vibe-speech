@@ -28,11 +28,12 @@ def app(ctx: click.Context, config_path: Optional[Path], log_level: Optional[str
 
 
 @app.command()
-@click.option("--dry-run", is_flag=True, help="Do not type; log only.")
+@click.option("--dry-run", is_flag=True, help="Do not speak; log only.")
 @click.pass_obj
 def serve(cfg: AppConfig, dry_run: bool) -> None:
     """Start the voice-to-text loop (currently stubbed)."""
     cfg.output.dry_run = dry_run or cfg.output.dry_run
+    cfg.speech.dry_run = dry_run or cfg.speech.dry_run
     runtime = SpeechRuntime(cfg)
     console.print(
         "[yellow]Starting vibe-speech (listening starts OFF; toggle the hotkey). Press Ctrl+C to exit.[/yellow]"
@@ -57,6 +58,10 @@ def doctor(cfg: AppConfig) -> None:
     table.add_row("output.dry_run", str(cfg.output.dry_run))
     table.add_row("output.typing_delay", str(cfg.output.typing_delay))
     table.add_row("output.focus_target", str(cfg.output.focus_target))
+    table.add_row("assistant.provider", cfg.assistant.provider)
+    table.add_row("assistant.personality", cfg.assistant.personality)
+    table.add_row("speech.command", cfg.speech.command)
+    table.add_row("speech.dry_run", str(cfg.speech.dry_run))
     table.add_row("hotkey.toggle", cfg.hotkey.toggle)
     table.add_row("log_level", cfg.log_level)
     console.print(table)

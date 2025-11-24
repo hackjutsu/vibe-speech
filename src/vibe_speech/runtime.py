@@ -10,11 +10,12 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import sounddevice as sd
 from pynput import keyboard
 
-from .automation import OutputAutomator
 from .config import AppConfig
+from .audio_capture import AudioCapture, AudioCaptureError
+from .assistant import LLMAssistant
+from .speech_output import SpeechSynthesizer
 from .processor import process_text
 from .rewriter import LocalLLMRewriter
 from .whisper_engine import WhisperEngine
@@ -39,12 +40,13 @@ class SpeechRuntime:
         self.config = config
         cfg_model_dir = Path(config.whisper.model_dir).expanduser() if config.whisper.model_dir else None
         self.model_dir = model_dir or cfg_model_dir
-        self.automator = OutputAutomator(config.output)
+        self.audio_capture = AudioCapture(config.audio)
         self.whisper = WhisperEngine(config.whisper, model_dir=self.model_dir)
         self.rewriter = LocalLLMRewriter(config.rewriter)
+        self.assistant = LLMAssistant(config.assistant)
+        self.speaker = SpeechSynthesizer(config.speech)
         self._listening = False
         self._last_text: Optional[str] = None
-        self._last_sent: str = ""
         self._hotkey_listener: Optional[object] = None
         self._stop = False
         self._capture_failures = 0
@@ -52,6 +54,7 @@ class SpeechRuntime:
 
     def start(self) -> None:
         logger.info("Starting speech runtime.")
+        self._log_pipeline_overview()
         self.whisper.load()
         self._listening = False  # start paused until hotkey toggles on
         if self.config.hotkey.push_to_talk:
@@ -70,8 +73,10 @@ class SpeechRuntime:
     def run_once(self, text: str) -> RuntimeStatus:
         """Helper for testing: process and send a provided transcript string."""
         try:
-            processed, rewrite_time = process_text(self.config.processing, text, self.rewriter)
-            result = self._deliver_output(processed)
+            processed, _ = process_text(self.config.processing, text, self.rewriter)
+            reply = self.assistant.respond(processed)
+            self.speaker.speak(reply.text)
+            self._last_text = processed
             return RuntimeStatus(listening=self._listening, last_text=self._last_text)
         except Exception as exc:
             logger.error("Processing failed: %s", exc)
@@ -97,27 +102,11 @@ class SpeechRuntime:
 
     def _capture_chunk(self) -> Optional[np.ndarray]:
         """Record a chunk of audio and return a numpy array."""
-        duration = self.config.audio.chunk_seconds
-        samplerate = self.config.audio.sample_rate
         try:
-            logger.debug("Recording audio chunk: %.2fs @ %d Hz", duration, samplerate)
-            audio = sd.rec(
-                int(duration * samplerate),
-                samplerate=samplerate,
-                channels=1,
-                dtype="float32",
-                device=self.config.audio.device_name,
-            )
-            sd.wait()
+            audio = self.audio_capture.capture_chunk()
             self._capture_failures = 0
-            audio = np.squeeze(audio)
-            # Skip near-silent chunks to avoid Whisper hallucinations.
-            rms = float(np.sqrt(np.mean(np.square(audio))))
-            if rms < self.config.audio.silence_threshold:
-                logger.debug("Skipping silent chunk (rms=%.6f < threshold=%.6f)", rms, self.config.audio.silence_threshold)
-                return None
             return audio
-        except Exception as exc:  # pragma: no cover - device specific
+        except AudioCaptureError as exc:  # pragma: no cover - device specific
             logger.error("Audio capture failed: %s", exc)
             self._capture_failures += 1
             if self._capture_failures >= 3:
@@ -131,24 +120,13 @@ class SpeechRuntime:
 
     def _capture_tail_audio(self) -> None:
         """Capture a short tail after release to avoid clipping final words."""
-        tail = self.config.audio.tail_padding_seconds
-        if tail <= 0:
-            return
-        samplerate = self.config.audio.sample_rate
         try:
-            logger.debug("Recording tail audio: %.2fs @ %d Hz", tail, samplerate)
-            audio = sd.rec(
-                int(tail * samplerate),
-                samplerate=samplerate,
-                channels=1,
-                dtype="float32",
-                device=self.config.audio.device_name,
-            )
-            sd.wait()
-            audio = np.squeeze(audio)
-            self._session_audio.append(audio)
-        except Exception as exc:  # pragma: no cover - device specific
+            tail = self.audio_capture.capture_tail()
+        except AudioCaptureError as exc:  # pragma: no cover - device specific
             logger.error("Tail audio capture failed: %s", exc)
+            return
+        if tail is not None:
+            self._session_audio.append(tail)
 
     def _start_hotkey(self) -> None:
         hotkey = self.config.hotkey.toggle
@@ -190,12 +168,24 @@ class SpeechRuntime:
         if self._listening:
             self._capture_failures = 0
             self._session_audio = []
-            self._last_sent = ""
         state = "ON" if self._listening else "OFF"
         logger.info("Listening %s (%s)", state, reason)
         if not self._listening:
             self._capture_tail_audio()
             self._flush_session_text()
+
+    def _log_pipeline_overview(self) -> None:
+        """Emit a concise map of the pipeline stages for debugging."""
+        outline = [
+            "Audio capture: AudioCapture + hotkey buffering in runtime.py",
+            "Transcription: WhisperEngine.transcribe in whisper_engine.py (loaded at start)",
+            "Text processing: process_text + optional LocalLLMRewriter in processor.py/rewriter.py",
+            "Assistant reply: LLMAssistant.respond in assistant.py",
+            "Output: SpeechSynthesizer.speak in speech_output.py; typing automation via automation.py",
+            "Orchestration: SpeechRuntime._flush_session_text() and _start_hotkey(); CLI entry in cli.py",
+        ]
+        for stage in outline:
+            logger.debug("Pipeline stage -> %s", stage)
 
     def _toggle_listening(self) -> None:
         self._set_listening(not self._listening, reason="toggle")
@@ -274,22 +264,6 @@ class SpeechRuntime:
 
         return stop
 
-    def _deliver_output(self, processed: str):
-        text = processed.strip()
-        if not text:
-            return None
-        if self.config.processing.incremental and self._last_sent and text.startswith(self._last_sent):
-            to_send = text[len(self._last_sent) :].lstrip()
-            if not to_send:
-                return None
-        else:
-            to_send = text
-        result = self.automator.send_text(to_send)
-        if result.sent or result.dry_run:
-            self._last_text = text
-            self._last_sent = text
-        return result
-
     def _flush_session_text(self) -> None:
         if not self._session_audio:
             return
@@ -300,29 +274,60 @@ class SpeechRuntime:
             t0 = time.perf_counter()
             transcript = self.whisper.transcribe(audio)
             t1 = time.perf_counter()
-            full_text, rewrite_time = process_text(self.config.processing, transcript, self.rewriter)
+            processed_text, rewrite_time = process_text(self.config.processing, transcript, self.rewriter)
+            if not processed_text:
+                stop_spinner()
+                return
+            logger.info("Transcript (raw): %s", transcript.strip())
+            logger.info("Transcript (processed): %s", processed_text)
+            reply_start = time.perf_counter()
+            assistant_reply = self.assistant.respond(processed_text)
+            reply_end = time.perf_counter()
+            speak_start = time.perf_counter()
+            speech_result = self.speaker.speak(assistant_reply.text)
+            speak_end = time.perf_counter()
         except Exception as exc:
             stop_spinner()
-            logger.error("Transcription/processing failed: %s", exc)
-            return
-        if not full_text:
-            stop_spinner()
+            logger.error("Transcription/assistant processing failed: %s", exc)
             return
         total_transcribe = t1 - t0
-        result = self._deliver_output(full_text)
-        if result:
-            rewrite_str = (
-                f"{_COLOR_CYAN}{rewrite_time:.2f}s{_COLOR_RESET}"
-                if rewrite_time is not None
-                else f"{_COLOR_DIM}n/a{_COLOR_RESET}"
-            )
-            logger.info(
-                "Session transcript: %s | raw: %s | transcribe=%s%.2fs%s rewrite=%s",
-                full_text,
-                transcript.strip(),
-                _COLOR_GREEN,
-                total_transcribe,
-                _COLOR_RESET,
-                rewrite_str,
-            )
+        reply_time = assistant_reply.duration_s if assistant_reply else (reply_end - reply_start)
+        speak_time = speak_end - speak_start
+        rewrite_str = (
+            f"{_COLOR_CYAN}{rewrite_time:.2f}s{_COLOR_RESET}"
+            if rewrite_time is not None
+            else f"{_COLOR_DIM}n/a{_COLOR_RESET}"
+        )
+        logger.info(
+            "Heard: %s | raw: %s | reply: %s | transcribe=%s%.2fs%s rewrite=%s llm=%s%.2fs%s spoken=%s",
+            processed_text,
+            transcript.strip(),
+            assistant_reply.text.strip(),
+            _COLOR_GREEN,
+            total_transcribe,
+            _COLOR_RESET,
+            rewrite_str,
+            _COLOR_CYAN,
+            reply_time,
+            _COLOR_RESET,
+            speech_result.spoken or speech_result.dry_run,
+        )
+        logger.info(
+            "Stage timings:\n"
+            "  Transcribe: %s%.2fs%s\n"
+            "  Rewrite:    %s\n"
+            "  Assistant:  %s%.2fs%s\n"
+            "  Speech:     %s%.2fs%s",
+            _COLOR_GREEN,
+            total_transcribe,
+            _COLOR_RESET,
+            rewrite_str,
+            _COLOR_CYAN,
+            reply_time,
+            _COLOR_RESET,
+            _COLOR_CYAN,
+            speak_time,
+            _COLOR_RESET,
+        )
+        self._last_text = processed_text
         stop_spinner()
