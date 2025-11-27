@@ -49,7 +49,7 @@ class OutputConfig(BaseModel):
 
 
 class HotkeyConfig(BaseModel):
-    toggle: str = Field("ctrl+shift+space", description="Hotkey to start/stop listening.")
+    toggle: str = Field("ctrl+shift+t", description="Hotkey to start/stop listening.")
     push_to_talk: bool = Field(True, description="If true, listen only while the hotkey is held.")
 
 

@@ -153,13 +153,15 @@ class SpeechRuntime:
                 if self._listening and not combo_keys.issubset(pressed):
                     self._set_listening(False, reason="push-to-talk")
 
-            listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+            # suppress=True stops the key events from propagating to the terminal/shell
+            # (avoids artifacts like repeated load averages or NUL output).
+            listener = keyboard.Listener(on_press=on_press, on_release=on_release, suppress=True)
             listener.start()
             self._hotkey_listener = listener
             logger.info("Push-to-talk enabled; hold '%s' to listen.", hotkey)
         else:
             combo = self._to_pynput_combo(hotkey)
-            self._hotkey_listener = keyboard.GlobalHotKeys({combo: self._toggle_listening})
+            self._hotkey_listener = keyboard.GlobalHotKeys({combo: self._toggle_listening}, suppress=True)
             self._hotkey_listener.start()
             logger.info("Hotkey '%s' registered for start/stop listening.", hotkey)
 
