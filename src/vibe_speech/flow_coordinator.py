@@ -200,6 +200,10 @@ class FlowCoordinator:
             if rewrite_time is not None
             else f"{_COLOR_DIM}n/a{_COLOR_RESET}"
         )
+        rewrite_str_plain = f"{rewrite_time:.2f}s" if rewrite_time is not None else "n/a"
+        summary_text = processed_text.replace("\n", " ").strip()
+        if len(summary_text) > 120:
+            summary_text = summary_text[:117] + "..."
         logger.info(
             "Stage timings:\n"
             "  Transcribe: %s%.2fs%s\n"
@@ -216,5 +220,14 @@ class FlowCoordinator:
             _COLOR_CYAN,
             speak_time,
             _COLOR_RESET,
+        )
+        logger.info(
+            "Turn summary | text='%s' | transcribe=%.2fs rewrite=%s llm=%.2fs speech=%.2fs spoken=%s",
+            summary_text,
+            total_transcribe,
+            rewrite_str_plain,
+            reply_time,
+            speak_time,
+            speech_result.spoken or speech_result.dry_run,
         )
         self._last_text = processed_text

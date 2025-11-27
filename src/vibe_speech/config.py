@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Dict, Literal, Optional
 
 import yaml
 from pydantic import BaseModel, Field, ValidationError
@@ -118,6 +118,10 @@ class AppConfig(BaseModel):
     assistant: AssistantConfig = AssistantConfig()
     speech: SpeechOutputConfig = SpeechOutputConfig()
     log_level: str = Field("INFO", description="Logging level, e.g., INFO, DEBUG.")
+    module_log_levels: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Optional per-module log levels, e.g., {'faster_whisper': 'DEBUG'}.",
+    )
 
     @classmethod
     def from_file(cls, path: Optional[Path] = None) -> "AppConfig":

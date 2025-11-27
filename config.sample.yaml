@@ -52,3 +52,14 @@ hotkey:
   toggle: ctrl+m
   push_to_talk: true
 log_level: INFO
+module_log_levels:
+  # Set per-module log levels; defaults are INFO unless overridden.
+  # Common options:
+  #   faster_whisper                 -> transcription backend
+  #   vibe_speech.flow_coordinator   -> main orchestration and timings
+  #   vibe_speech.flow.hotkey        -> hotkey press/release debugging
+  #   vibe_speech.speech_output      -> TTS execution
+  #   vibe_speech.assistant          -> assistant responses/requests
+  #   vibe_speech.rewriter           -> rewriter requests/responses
+  faster_whisper: DEBUG
+  vibe_speech.flow_coordinator: INFO

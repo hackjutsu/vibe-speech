@@ -23,7 +23,7 @@ def app(ctx: click.Context, config_path: Optional[Path], log_level: Optional[str
     cfg = AppConfig.from_file(config_path)
     if log_level:
         cfg.log_level = log_level
-    setup_logging(cfg.log_level)
+    setup_logging(cfg.log_level, cfg.module_log_levels)
     ctx.obj = cfg
 
 
