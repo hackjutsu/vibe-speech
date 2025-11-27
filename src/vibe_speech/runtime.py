@@ -23,6 +23,8 @@ from .whisper_engine import WhisperEngine
 logger = logging.getLogger(__name__)
 _COLOR_GREEN = "\033[92m"
 _COLOR_CYAN = "\033[96m"
+_COLOR_BLUE = "\033[94m"
+_COLOR_ORANGE = "\033[38;5;208m"
 _COLOR_DIM = "\033[90m"
 _COLOR_RESET = "\033[0m"
 
@@ -286,6 +288,15 @@ class SpeechRuntime:
             speak_start = time.perf_counter()
             speech_result = self.speaker.speak(assistant_reply.text)
             speak_end = time.perf_counter()
+            user_block = (
+                f"\n\n{_COLOR_BLUE}user input(you):{_COLOR_RESET}\n"
+                f"{_COLOR_BLUE}{processed_text}{_COLOR_RESET}"
+            )
+            assistant_block = (
+                f"{_COLOR_ORANGE}assistant response:{_COLOR_RESET}\n"
+                f"{_COLOR_ORANGE}{assistant_reply.text.strip()}{_COLOR_RESET}"
+            )
+            logger.info("%s\n\n%s", user_block, assistant_block)
         except Exception as exc:
             stop_spinner()
             logger.error("Transcription/assistant processing failed: %s", exc)
