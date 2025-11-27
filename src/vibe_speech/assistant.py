@@ -83,6 +83,10 @@ class LLMAssistant:
                 lines.append(f"Assistant: {past_reply.strip()}")
                 lines.append("")
 
+        lines.append(
+            "Respond only with the next assistant message. Do not repeat or quote prior turns. "
+            "Do not include 'User:' or 'Assistant:' labels in your reply."
+        )
         lines.append(f"User: {user_text.strip()}")
         lines.append("Assistant:")
         return "\n".join(lines)
@@ -107,6 +111,7 @@ class LLMAssistant:
                 "options": {
                     "temperature": self.config.temperature,
                     "num_predict": self.config.max_tokens,
+                    "stop": ["User:", "Assistant:", "\nUser:", "\nAssistant:"],
                 },
             }
         ).encode("utf-8")

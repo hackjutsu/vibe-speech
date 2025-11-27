@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import logging
 from typing import Optional
 
 from faster_whisper import WhisperModel
@@ -16,6 +17,12 @@ class WhisperEngine:
         self.config = config
         self.model_dir = model_dir
         self.model: Optional[WhisperModel] = None
+        self._configure_faster_whisper_logging()
+
+    def _configure_faster_whisper_logging(self) -> None:
+        """Set faster_whisper logger to DEBUG to avoid INFO noise."""
+        fw_logger = logging.getLogger("faster_whisper")
+        fw_logger.setLevel(logging.DEBUG)
 
     def load(self) -> None:
         """Load the Whisper model with a compatibility fallback."""

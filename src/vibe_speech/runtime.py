@@ -153,15 +153,15 @@ class SpeechRuntime:
                 if self._listening and not combo_keys.issubset(pressed):
                     self._set_listening(False, reason="push-to-talk")
 
-            # suppress=True stops the key events from propagating to the terminal/shell
-            # (avoids artifacts like repeated load averages or NUL output).
-            listener = keyboard.Listener(on_press=on_press, on_release=on_release, suppress=True)
+            # Avoid suppressing system key events so the keyboard stays responsive.
+            listener = keyboard.Listener(on_press=on_press, on_release=on_release, suppress=False)
             listener.start()
             self._hotkey_listener = listener
             logger.info("Push-to-talk enabled; hold '%s' to listen.", hotkey)
         else:
             combo = self._to_pynput_combo(hotkey)
-            self._hotkey_listener = keyboard.GlobalHotKeys({combo: self._toggle_listening}, suppress=True)
+            # Avoid suppressing to prevent blocking other keyboard input.
+            self._hotkey_listener = keyboard.GlobalHotKeys({combo: self._toggle_listening}, suppress=False)
             self._hotkey_listener.start()
             logger.info("Hotkey '%s' registered for start/stop listening.", hotkey)
 
@@ -263,7 +263,8 @@ class SpeechRuntime:
         def stop() -> None:
             stop_event.set()
             thread.join(timeout=1.0)
-            sys.stdout.write("\r")
+            # Clear the spinner line and move to a fresh line for subsequent logs.
+            sys.stdout.write("\r   \r\n")
             sys.stdout.flush()
 
         return stop
@@ -282,8 +283,8 @@ class SpeechRuntime:
             if not processed_text:
                 stop_spinner()
                 return
-            logger.info("Transcript (raw): %s", transcript.strip())
-            logger.info("Transcript (processed): %s", processed_text)
+            logger.debug("Transcript (raw): %s", transcript.strip())
+            logger.debug("Transcript (processed): %s", processed_text)
             reply_start = time.perf_counter()
             assistant_reply = self.assistant.respond(processed_text)
             reply_end = time.perf_counter()
@@ -303,6 +304,8 @@ class SpeechRuntime:
             stop_spinner()
             logger.error("Transcription/assistant processing failed: %s", exc)
             return
+        # Stop spinner before emitting logs to avoid interleaving with timestamps.
+        stop_spinner()
         total_transcribe = t1 - t0
         reply_time = assistant_reply.duration_s if assistant_reply else (reply_end - reply_start)
         speak_time = speak_end - speak_start
@@ -310,20 +313,6 @@ class SpeechRuntime:
             f"{_COLOR_CYAN}{rewrite_time:.2f}s{_COLOR_RESET}"
             if rewrite_time is not None
             else f"{_COLOR_DIM}n/a{_COLOR_RESET}"
-        )
-        logger.info(
-            "Heard: %s | raw: %s | reply: %s | transcribe=%s%.2fs%s rewrite=%s llm=%s%.2fs%s spoken=%s",
-            processed_text,
-            transcript.strip(),
-            assistant_reply.text.strip(),
-            _COLOR_GREEN,
-            total_transcribe,
-            _COLOR_RESET,
-            rewrite_str,
-            _COLOR_CYAN,
-            reply_time,
-            _COLOR_RESET,
-            speech_result.spoken or speech_result.dry_run,
         )
         logger.info(
             "Stage timings:\n"
@@ -343,4 +332,3 @@ class SpeechRuntime:
             _COLOR_RESET,
         )
         self._last_text = processed_text
-        stop_spinner()
