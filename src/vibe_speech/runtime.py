@@ -296,7 +296,7 @@ class SpeechRuntime:
                 f"{_COLOR_ORANGE}assistant response:{_COLOR_RESET}\n"
                 f"{_COLOR_ORANGE}{assistant_reply.text.strip()}{_COLOR_RESET}"
             )
-            logger.info("%s\n\n%s", user_block, assistant_block)
+            logger.info("%s\n\n%s\n", user_block, assistant_block)
         except Exception as exc:
             stop_spinner()
             logger.error("Transcription/assistant processing failed: %s", exc)
