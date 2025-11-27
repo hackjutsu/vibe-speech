@@ -287,9 +287,6 @@ class SpeechRuntime:
             reply_start = time.perf_counter()
             assistant_reply = self.assistant.respond(processed_text)
             reply_end = time.perf_counter()
-            speak_start = time.perf_counter()
-            speech_result = self.speaker.speak(assistant_reply.text)
-            speak_end = time.perf_counter()
             user_block = (
                 f"\n\n{_COLOR_BLUE}user input(you):{_COLOR_RESET}\n"
                 f"{_COLOR_BLUE}{processed_text}{_COLOR_RESET}"
@@ -299,6 +296,9 @@ class SpeechRuntime:
                 f"{_COLOR_ORANGE}{assistant_reply.text.strip()}{_COLOR_RESET}"
             )
             logger.info("%s\n\n%s\n", user_block, assistant_block)
+            speak_start = time.perf_counter()
+            speech_result = self.speaker.speak(assistant_reply.text)
+            speak_end = time.perf_counter()
         except Exception as exc:
             stop_spinner()
             logger.error("Transcription/assistant processing failed: %s", exc)

@@ -54,7 +54,7 @@ output:
   typing_delay: 0.005
   focus_target:
 hotkey:
-  toggle: ctrl+shift+t
+  toggle: ctrl+m
   push_to_talk: true
 log_level: INFO
 speech:
