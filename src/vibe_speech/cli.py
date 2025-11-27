@@ -10,7 +10,7 @@ from rich.table import Table
 
 from .config import AppConfig
 from .logging import setup_logging
-from .runtime import SpeechRuntime
+from .flow_coordinator import FlowCoordinator
 
 console = Console()
 
@@ -34,7 +34,7 @@ def serve(cfg: AppConfig, dry_run: bool) -> None:
     """Start the voice-to-text loop (currently stubbed)."""
     cfg.output.dry_run = dry_run or cfg.output.dry_run
     cfg.speech.dry_run = dry_run or cfg.speech.dry_run
-    runtime = SpeechRuntime(cfg)
+    runtime = FlowCoordinator(cfg)
     console.print(
         "[yellow]Starting vibe-speech (listening starts OFF; toggle the hotkey). Press Ctrl+C to exit.[/yellow]"
     )
