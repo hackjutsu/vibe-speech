@@ -143,6 +143,8 @@ class SpeechRuntime:
             pressed: set[object] = set()
 
             def on_press(key: object) -> None:
+                if key not in combo_keys:
+                    return
                 pressed.add(key)
                 if combo_keys.issubset(pressed):
                     self._set_listening(True, reason="push-to-talk")
@@ -152,6 +154,7 @@ class SpeechRuntime:
                     pressed.remove(key)
                 if self._listening and not combo_keys.issubset(pressed):
                     self._set_listening(False, reason="push-to-talk")
+                    pressed.clear()  # prevent sticky keys causing accidental re-activation
 
             # Avoid suppressing system key events so the keyboard stays responsive.
             listener = keyboard.Listener(on_press=on_press, on_release=on_release, suppress=False)
