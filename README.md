@@ -10,6 +10,14 @@ Cross-platform, local-first voice helper that listens to the mic, runs Whisper l
 - Assistant prompts can include a configurable window of recent conversation history (`assistant.history_length`).
 - Spinner/colored timing logs so you can see when transcription/rewriting/assistant work is running.
 
+## Architecture (plain text)
+```
+Mic -> AudioCapture (chunk/tail) -> WhisperEngine (transcribe)
+    -> Processor (cleanup/correct + optional Rewriter)
+    -> Assistant (LLM; uses conversation history window)
+    -> SpeechSynthesizer (TTS) + Automation (typing)
+```
+
 ## Project layout
 - `src/vibe_speech/cli.py` – entrypoint (`vibe-speech` script) with `serve` and `doctor`.
 - `src/vibe_speech/config.py` – config models and loader.
@@ -28,6 +36,19 @@ Cross-platform, local-first voice helper that listens to the mic, runs Whisper l
    - Choose a Whisper model (`whisper.model_size`), beam size, `initial_prompt` if desired.
    - Set the assistant provider/model/personality/history length in `assistant.*`; adjust `speech.*` if your `xsst2` path or args differ.
    - Enable/disable the optional rewriter as needed.
+
+### Prompt shape (with history)
+```
+assistant.system_prompt
+Personality: <assistant.personality>
+
+[last N user/assistant turns, up to assistant.history_length]
+User: <previous user>
+Assistant: <previous reply>
+
+User: <current user text>
+Assistant:
+```
 4) Run: `vibe-speech --config config.yaml serve` (use `--dry-run` to log without speaking).
 5) Hold `ctrl+shift+space` (default) while speaking; release to transcribe, send to the assistant, and hear the reply. Spinner shows work in progress; logs include timing and raw/final text.
 
