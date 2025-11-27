@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Iterable
 
 import numpy as np
@@ -8,7 +9,11 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 try:
-    import webrtcvad
+    with warnings.catch_warnings():
+        # Suppress pkg_resources deprecation warnings emitted during webrtcvad import.
+        warnings.filterwarnings("ignore", category=UserWarning, module="pkg_resources")
+        warnings.filterwarnings("ignore", category=UserWarning, module="webrtcvad")
+        import webrtcvad
 except Exception:  # pragma: no cover - optional dependency
     webrtcvad = None  # type: ignore
 

@@ -56,14 +56,14 @@ class FlowCoordinator:
         self._capture_failures = 0
 
     def start(self) -> None:
-        logger.info("Starting speech flow.")
+        logger.debug("Starting speech flow.")
         self._log_pipeline_overview()
         self.whisper.load()
         self._listening = False  # start paused until hotkey toggles on
         if self.config.hotkey.push_to_talk:
-            logger.info("Push-to-talk armed. Hold the hotkey: %s", self.config.hotkey.toggle)
+            logger.debug("Push-to-talk armed. Hold the hotkey: %s", self.config.hotkey.toggle)
         else:
-            logger.info("Listening is OFF. Toggle with hotkey: %s", self.config.hotkey.toggle)
+            logger.debug("Listening is OFF. Toggle with hotkey: %s", self.config.hotkey.toggle)
 
     def stop(self) -> None:
         self._flush_session_text()
