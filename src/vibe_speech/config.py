@@ -95,6 +95,10 @@ class AssistantConfig(BaseModel):
         "Friendly and concise, with a calm tone.",
         description="Short description of the assistant's personality that is injected into the prompt.",
     )
+    history_length: int = Field(
+        3,
+        description="Number of past user/assistant turns to include in prompts (0 disables history).",
+    )
 
 
 class SpeechOutputConfig(BaseModel):

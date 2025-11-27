@@ -30,6 +30,7 @@ class LLMAssistant:
         self.config = config
         self._llama = None
         self._llama_error: Optional[str] = None
+        self._history: list[tuple[str, str]] = []
 
     def _load_local(self) -> None:
         if self.config.provider != "local":
@@ -66,18 +67,32 @@ class LLMAssistant:
         if not self.config.enabled:
             raise AssistantError("Assistant is disabled in configuration.")
         if self.config.provider == "ollama":
-            return self._respond_via_ollama(user_text)
-        return self._respond_via_llama(user_text)
+            reply = self._respond_via_ollama(user_text)
+        else:
+            reply = self._respond_via_llama(user_text)
+        self._remember_turn(user_text, reply.text)
+        return reply
 
     def _build_prompt(self, user_text: str) -> str:
         persona = self.config.personality.strip()
-        prompt = (
-            f"{self.config.system_prompt}\n"
-            f"Personality: {persona}\n\n"
-            f"User: {user_text.strip()}\n"
-            "Assistant:"
-        )
-        return prompt
+        lines: list[str] = [self.config.system_prompt, f"Personality: {persona}", ""]
+
+        if self.config.history_length > 0 and self._history:
+            for past_user, past_reply in self._history[-self.config.history_length :]:
+                lines.append(f"User: {past_user.strip()}")
+                lines.append(f"Assistant: {past_reply.strip()}")
+                lines.append("")
+
+        lines.append(f"User: {user_text.strip()}")
+        lines.append("Assistant:")
+        return "\n".join(lines)
+
+    def _remember_turn(self, user_text: str, reply_text: str) -> None:
+        if self.config.history_length <= 0:
+            return
+        self._history.append((user_text.strip(), reply_text.strip()))
+        if len(self._history) > self.config.history_length:
+            self._history = self._history[-self.config.history_length :]
 
     def _respond_via_ollama(self, user_text: str) -> AssistantReply:
         if not self.config.model:
