@@ -1,8 +1,11 @@
 audio:
   sample_rate: 16000
   chunk_seconds: 2.0
-  silence_threshold: 0.0
-  tail_padding_seconds: 0.5
+  silence_threshold: 0.001
+  tail_padding_seconds: 1
+  vad_enabled: true
+  vad_aggressiveness: 3
+  vad_min_voiced_ratio: 0.2
   device_name:
 whisper:
   model_size: distil-large-v3.5
@@ -13,7 +16,7 @@ whisper:
     Transcribe informal English about daily tasks and software development (code, tools, tickets).
     Be tolerant of accents and minor grammar errors; preserve technical terms and meaning without rewriting.
   model_dir: .cache/huggingface
-  offline: false
+  offline: true
 processing:
   mode: correct
   incremental: false
@@ -57,6 +60,9 @@ hotkey:
   toggle: ctrl+shift+space
   push_to_talk: true
 log_level: INFO
+module_log_levels:
+  faster_whisper: WARNING
+  vibe_speech.flow_coordinator: INFO
 speech:
   enabled: true
   command: say

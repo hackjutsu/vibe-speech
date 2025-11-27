@@ -20,6 +20,16 @@ class AudioConfig(BaseModel):
     tail_padding_seconds: float = Field(
         0.5, description="Additional audio to capture after hotkey release to avoid clipping the end of speech."
     )
+    vad_enabled: bool = Field(True, description="If true, run WebRTC VAD before transcription.")
+    vad_aggressiveness: int = Field(
+        2, description="WebRTC VAD aggressiveness (0-3); higher = more aggressive speech detection."
+    )
+    vad_min_voiced_ratio: float = Field(
+        0.1,
+        description="Minimum ratio of voiced frames (0-1) to treat the session as speech; below this skips transcription.",
+        ge=0.0,
+        le=1.0,
+    )
 
 
 class WhisperConfig(BaseModel):

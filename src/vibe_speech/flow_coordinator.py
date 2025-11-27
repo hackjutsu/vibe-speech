@@ -12,6 +12,7 @@ from .flow.audio_session import AudioSession
 from .flow.hotkey import HotkeyManager
 from .flow.indicator import show_listening_banner
 from .flow.spinner import Spinner
+from .flow.vad import VADUnavailable, has_speech
 from .audio_capture import AudioCapture, AudioCaptureError
 from .assistant import LLMAssistant
 from .config import AppConfig
@@ -169,6 +170,30 @@ class FlowCoordinator:
         with Spinner("Processing speech"):
             try:
                 t0 = time.perf_counter()
+                if self.config.audio.vad_enabled:
+                    try:
+                        voiced, ratio = has_speech(
+                            audio,
+                            self.config.audio.sample_rate,
+                            self.config.audio.vad_aggressiveness,
+                            self.config.audio.vad_min_voiced_ratio,
+                        )
+                        if not voiced:
+                            logger.info(
+                                "Skipping transcription: no speech detected (voiced ratio=%.3f < %.3f)",
+                                ratio,
+                                self.config.audio.vad_min_voiced_ratio,
+                            )
+                            return
+                        else:
+                            logger.info(
+                                "VAD passed: voiced ratio=%.3f >= %.3f (aggr=%d)",
+                                ratio,
+                                self.config.audio.vad_min_voiced_ratio,
+                                self.config.audio.vad_aggressiveness,
+                            )
+                    except VADUnavailable:
+                        logger.info("VAD unavailable; continuing without voice gate.")
                 transcript = self.whisper.transcribe(audio)
                 t1 = time.perf_counter()
                 processed_text, rewrite_time = process_text(self.config.processing, transcript, self.rewriter)
