@@ -10,6 +10,7 @@ import numpy as np
 
 from .flow.audio_session import AudioSession
 from .flow.hotkey import HotkeyManager
+from .flow.indicator import show_listening_banner
 from .flow.spinner import Spinner
 from .audio_capture import AudioCapture, AudioCaptureError
 from .assistant import LLMAssistant
@@ -142,7 +143,8 @@ class FlowCoordinator:
             self._capture_failures = 0
             self.session.reset()
         state = "ON" if self._listening else "OFF"
-        logger.info("Listening %s (%s)", state, reason)
+        logger.debug("Listening %s (%s)", state, reason)
+        show_listening_banner(self._listening)
         if not self._listening:
             self._capture_tail_audio()
             self._flush_session_text()
@@ -221,7 +223,7 @@ class FlowCoordinator:
             speak_time,
             _COLOR_RESET,
         )
-        logger.info(
+        logger.debug(
             "Turn summary | text='%s' | transcribe=%.2fs rewrite=%s llm=%.2fs speech=%.2fs spoken=%s",
             summary_text,
             total_transcribe,
