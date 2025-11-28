@@ -20,20 +20,24 @@ class AudioCapture:
 
     def __init__(self, config: AudioConfig) -> None:
         self.config = config
+        # Set sensible defaults to avoid repeated per-call configuration.
+        sd.default.samplerate = self.config.sample_rate
+        sd.default.channels = 1
+        if self.config.device_name:
+            sd.default.device = self.config.device_name
 
     def capture_chunk(self) -> Optional[np.ndarray]:
         duration = self.config.chunk_seconds
-        samplerate = self.config.sample_rate
+        frames = int(duration * self.config.sample_rate)
         try:
-            logger.debug("Recording audio chunk: %.2fs @ %d Hz", duration, samplerate)
-            audio = sd.rec(
-                int(duration * samplerate),
-                samplerate=samplerate,
+            logger.debug("Recording audio chunk: %.2fs @ %d Hz", duration, self.config.sample_rate)
+            with sd.InputStream(
+                samplerate=self.config.sample_rate,
                 channels=1,
                 dtype="float32",
                 device=self.config.device_name,
-            )
-            sd.wait()
+            ) as stream:
+                audio, _ = stream.read(frames)
         except Exception as exc:  # pragma: no cover - device specific
             raise AudioCaptureError(exc) from exc
 
@@ -53,17 +57,16 @@ class AudioCapture:
         tail = self.config.tail_padding_seconds
         if tail <= 0:
             return None
-        samplerate = self.config.sample_rate
+        frames = int(tail * self.config.sample_rate)
         try:
-            logger.debug("Recording tail audio: %.2fs @ %d Hz", tail, samplerate)
-            audio = sd.rec(
-                int(tail * samplerate),
-                samplerate=samplerate,
+            logger.debug("Recording tail audio: %.2fs @ %d Hz", tail, self.config.sample_rate)
+            with sd.InputStream(
+                samplerate=self.config.sample_rate,
                 channels=1,
                 dtype="float32",
                 device=self.config.device_name,
-            )
-            sd.wait()
+            ) as stream:
+                audio, _ = stream.read(frames)
         except Exception as exc:  # pragma: no cover - device specific
             raise AudioCaptureError(exc) from exc
 
