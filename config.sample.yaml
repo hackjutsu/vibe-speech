@@ -9,6 +9,8 @@ whisper:
   compute_type: int8
   beam_size: 5
   language: en
+  remote_url:
+  remote_timeout: 30.0
   model_dir: .cache/huggingface
   offline: true
 processing:
@@ -17,17 +19,19 @@ processing:
   max_chars: 0
 rewriter:
   enabled: false
-  provider: local
+  provider: ollama
   model_path:
-  model:
+  model: qwen3:8b
+  ollama_url: http://192.168.50.132:11434
   temperature: 0.2
   max_tokens: 256
   system_prompt: You are a transcription corrector. Rewrite the text with proper grammar and punctuation, but do not change its meaning.
 assistant:
   enabled: true
-  provider: local
+  provider: ollama
   model_path:
-  model:
+  model: qwen3:8b
+  ollama_url: http://192.168.50.132:11434
   temperature: 0.4
   max_tokens: 256
   system_prompt: >

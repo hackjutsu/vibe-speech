@@ -40,6 +40,11 @@ class WhisperConfig(BaseModel):
     initial_prompt: Optional[str] = Field(
         default=None, description="Optional prompt/context to prime Whisper decoding."
     )
+    remote_url: Optional[str] = Field(
+        default=None,
+        description="Base URL of a remote Whisper server; when set, audio is sent to /transcribe instead of local inference.",
+    )
+    remote_timeout: float = Field(30.0, description="Timeout (seconds) for remote Whisper requests.")
     model_dir: Optional[str] = Field(
         ".cache/huggingface", description="Local cache directory for model downloads."
     )

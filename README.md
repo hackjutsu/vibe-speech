@@ -34,6 +34,7 @@ Mic -> AudioCapture (chunk/tail) -> WhisperEngine (transcribe)
 3) Copy and edit config: `cp config.sample.yaml config.yaml`
    - Set `audio.device_name` to your mic.
    - Choose a Whisper model (`whisper.model_size`), beam size, `initial_prompt` if desired.
+   - Set `whisper.remote_url` to offload transcription to your remote `/transcribe` service (leave empty to use local Whisper).
    - Set the assistant provider/model/personality/history length in `assistant.*`; adjust `speech.*` if your `xsst2` path or args differ.
    - Enable/disable the optional rewriter as needed.
 

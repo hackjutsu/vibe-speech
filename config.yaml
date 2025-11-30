@@ -8,32 +8,60 @@ audio:
   vad_min_voiced_ratio: 0.2
   device_name:
 whisper:
-  model_size: distil-large-v3.5
+  model_size: large-v3-turbo
   compute_type: float16
   beam_size: 3
   language: en
-  initial_prompt: >
-    Transcribe informal English about daily tasks and software development (code, tools, tickets).
-    Be tolerant of accents and minor grammar errors; preserve technical terms and meaning without rewriting.
+  remote_url: http://192.168.50.132:8000
+  remote_timeout: 30.0
+  initial_prompt: |
+    The speaker uses clear English with a slight Asion accent.
+    Sentences should be natural, with correct grammar and punctuation.
+    Whisper should prefer accurate technical vocabulary.
+
+    Example phrasing from this speaker:
+    "I want to run the Whisper server on Ubuntu."
+    "Can you test this on the remote machine through SSH?"
+    "I’m trying to make the transcription more accurate."
+    "I use Kubernetes, Python, and GPU acceleration."
+
+    Important vocabulary to recognize:
+    Whisper, Codex, Ollama, Kubenetes,
+    Ubuntu, Kubernetes, SSH, GPU, CUDA, 4090, M4 Pro,
+    Python, API, local development.
   model_dir: .cache/huggingface
-  offline: true
+  offline: false
 processing:
   mode: correct
   incremental: false
   max_chars: 0
 rewriter:
-  enabled: false
+  enabled: true
   provider: ollama
-  model: qwen2.5:7b
+  model: qwen3:8b # a smaller model for grammar fix
   model_path:
+  ollama_url: http://192.168.50.132:11434
   temperature: 0.2
   max_tokens: 256
-  system_prompt: Fixed grammar only. Do not reorder the sentences or change the original meaning.
+  system_prompt: |
+    You are a grammar-correction assistant for English speech transcripts.
+
+    Your job:
+    - Return early as is if no issues found.
+    - Fix grammar, tense, and word forms.
+    - Fix punctuation and capitalization.
+    - Keep the speaker's meaning and style.
+    - Keep it sounding like spoken language, not formal writing.
+    - Do NOT add new ideas or explanations.
+    - Do NOT reorder or rewrite content unless it is obvious noise.
+    - Do NOT remove content unless it is a clear transcription artifact.
+
+    Output only the corrected transcript with no explanation.
 assistant:
   enabled: true
   provider: ollama
-  model: qwen2.5:7b
-  ollama_url: http://localhost:11434
+  model: qwen3:14b
+  ollama_url: http://192.168.50.132:11434
   temperature: 0.4
   max_tokens: 256
   history_length: 100
@@ -41,16 +69,17 @@ assistant:
     You are an AI assistant focused on completing the user's task accurately and efficiently.
     Be concise, direct, and avoid altering the user's intent.
     If the request is unclear or contradictory, ask a brief clarifying question before proceeding.
+    NEVER reply with any emoji.
 
     Understanding user input:
       - User messages may contain transcription errors, accent issues, or broken grammar.
-      - Be tolerant and infer the intended meaning.
+      - Be tolerant and clarify the intended meaning.
       - If something is unclear or contradictory, ask for clarification.
 
   personality: |
-    Persona: Emma. She is short-tempered, reluctant, impatient, and sometimes angry.
-    She complains briefly, mutters under her breath, and stays blunt and punchy—not verbose.
-    Despite the attitude, she always follows through and completes the task.
+    Persona: Emma. She is good-tempered, helpful and very nice assistant.
+    She always compliments in a conversational way.
+    Despite the attitude, she always follows through and completes the task. 
 
 output:
   dry_run: false
