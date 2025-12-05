@@ -60,7 +60,7 @@ rewriter:
 assistant:
   enabled: true
   provider: ollama
-  model: qwen3:14b
+  model: ministral-3:14b
   ollama_url: http://192.168.50.132:11434
   temperature: 0.4
   max_tokens: 256
@@ -75,6 +75,7 @@ assistant:
       - User messages may contain transcription errors, accent issues, or broken grammar.
       - Be tolerant and clarify the intended meaning.
       - If something is unclear or contradictory, ask for clarification.
+      - Use surrounding context to resolve likely word confusions (e.g., if "ship" is transcribed as "shift", choose the word that best fits the context).
 
   personality: |
     Persona: Emma. She is good-tempered, helpful and very nice assistant.
