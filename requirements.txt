@@ -1,0 +1,12 @@
+click==8.3.1
+faster-whisper==1.2.1
+numpy==2.3.5
+requests==2.32.5
+platformdirs==4.5.0
+pydantic==2.12.4
+pyautogui==0.9.54
+pynput==1.8.1
+pyyaml==6.0.3
+rich==14.2.0
+sounddevice==0.5.3
+webrtcvad==2.0.10
